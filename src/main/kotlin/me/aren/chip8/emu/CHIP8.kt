@@ -49,8 +49,8 @@ class CHIP8 {
         for (i in FONTSET.indices) memory[i] = FONTSET[i]
     }
 
-    fun incrementProgramCounter() {
-        programCounter.plus(2u);
+    private fun incrementProgramCounter() {
+        programCounter = (programCounter + 2u.toUShort()).toUShort()
     }
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -58,7 +58,7 @@ class CHIP8 {
         // I hate this, thanks kotlin
         opcode = ((memory[programCounter.toInt()].toUInt() shl 8) or memory[(programCounter + 1u).toInt()].toUInt()).toUShort()
 
-        val first = (opcode.toInt() ushr 12).toUShort()
+        val first = (opcode.toInt() shr 12).toUShort()
 
         when(first) {
             Utils.hexToU16(0x0) -> {
@@ -68,7 +68,8 @@ class CHIP8 {
                 }
                 // RET
                 else if(opcode == Utils.hexToU16(0x00EE)) {
-
+                    sp = (sp - 1u.toUShort()).toUShort()
+                    programCounter = stack[sp.toInt()]
                 }
 
                 incrementProgramCounter()
@@ -78,7 +79,66 @@ class CHIP8 {
                 println("JMP to ${(opcode and Utils.hexToU16(0x0FFF)).toHexString()}")
                 programCounter = opcode and Utils.hexToU16(0x0FFF)
             }
+            Utils.hexToU16(0x2) -> {
+                stack[sp.toInt()] = programCounter
+                sp = (sp + 1u.toUShort()).toUShort()
+                programCounter = opcode and Utils.hexToU16(0x0FFF)
+            }
+            Utils.hexToU16(0x3) -> {
+                val x = (opcode and Utils.hexToU16(0x0F00)).toInt() shr 8
+                val k = opcode and Utils.hexToU16(0x00FF)
+
+                if(registers[x].toUInt() == k.toUInt()) {
+                    incrementProgramCounter()
+                }
+
+                incrementProgramCounter()
+            }
+            Utils.hexToU16(0x4) -> {
+                val x = (opcode and Utils.hexToU16(0x0F00)).toInt() shr 8
+                val k = opcode and Utils.hexToU16(0x00FF)
+
+                if(registers[x].toUInt() != k.toUInt()) {
+                    incrementProgramCounter()
+                }
+
+                incrementProgramCounter()
+            }
+            Utils.hexToU16(0x5) -> {
+                val x = (opcode and Utils.hexToU16(0x0F00)).toInt() shr 8
+                val y = opcode and Utils.hexToU16(0x00F0)
+
+                if(registers[x].toUInt() == registers[y.toInt()].toUInt()) {
+                    incrementProgramCounter()
+                }
+
+                incrementProgramCounter()
+            }
+            Utils.hexToU16(0x6) -> {
+                val x = (opcode and Utils.hexToU16(0x0F00)).toInt() shr 8
+                val k = opcode and Utils.hexToU16(0x00FF)
+
+                registers[x] = k.toUByte()
+
+                incrementProgramCounter()
+            }
         }
+    }
+
+    fun reset() {
+        programCounter = Utils.hexToU16(0x200)
+        opcode = 0u
+        index = 0u
+        sp = 0u
+        delayTimer = 0u
+        soundTimer = 0u
+
+        for (i in graphics.indices) graphics[i] = 0u
+        for (i in memory.indices) memory[i] = 0u
+        for (i in stack.indices) stack[i] = 0u
+        for (i in registers.indices) registers[i] = 0u
+        for (i in keys.indices) keys[i] = 0u
+        for (i in FONTSET.indices) memory[i] = FONTSET[i]
     }
 
 }
