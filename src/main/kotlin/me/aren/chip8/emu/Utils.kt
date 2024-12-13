@@ -33,5 +33,7 @@ class Utils {
             require(hex >= 0) { "Value must be non-negative for ULong" }
             return hex.toULong()
         }
+
+        fun Boolean.toInt() = if (this) 1 else 0
     }
 }

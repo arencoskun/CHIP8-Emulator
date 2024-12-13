@@ -28,11 +28,16 @@ fun main() {
     chip8.memory[0x203] = 0x49u
      */
 
-    chip8.memory[0x200] = 0x22u  // high
+    /*chip8.memory[0x200] = 0x22u  // high
     chip8.memory[0x201] = 0x50u  // low
     chip8.memory[0x250] = 0x00u
     chip8.memory[0x251] = 0xEEu
+    */
 
+    chip8.memory[0x200] = 0x61u
+    chip8.memory[0x201] = 0x50u
+    chip8.memory[0x202] = 0x82u
+    chip8.memory[0x203] = 0x10u
 
     while(true) {
         chip8.cycle()
