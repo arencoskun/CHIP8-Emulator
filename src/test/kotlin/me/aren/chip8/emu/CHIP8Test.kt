@@ -192,10 +192,10 @@ class CHIP8Test {
   chip8.reset()
   chip8.memory[0x200] = 0x63u
   chip8.memory[0x201] = 0x01u
-  chip8.memory[0x200] = 0x64u
-  chip8.memory[0x201] = 0x01u
-  chip8.memory[0x202] = 0x83u
-  chip8.memory[0x203] = 0x41u
+  chip8.memory[0x202] = 0x64u
+  chip8.memory[0x203] = 0x01u
+  chip8.memory[0x204] = 0x83u
+  chip8.memory[0x205] = 0x41u
 
   chip8.cycle()
   chip8.cycle()
