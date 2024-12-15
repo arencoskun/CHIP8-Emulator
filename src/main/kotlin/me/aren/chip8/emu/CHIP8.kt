@@ -1,8 +1,19 @@
 package me.aren.chip8.emu
 
 import me.aren.chip8.emu.Utils.Companion.toInt
+import kotlin.random.Random
 
-@OptIn(ExperimentalUnsignedTypes::class, ExperimentalStdlibApi::class)
+typealias u8 = UByte
+typealias u16 = UShort
+typealias u32 = UInt
+typealias u64 = ULong
+
+typealias u8a = UByteArray
+typealias u16a = UShortArray
+typealias u32a = UIntArray
+typealias u64a = ULongArray
+
+@OptIn(ExperimentalUnsignedTypes::class)
 class CHIP8 {
     var opcode: u16
     var memory: u8a = u8a(4096)
@@ -165,6 +176,60 @@ class CHIP8 {
                     }
                 }
 
+
+                incrementProgramCounter()
+            }
+            Utils.hexToU16(0x9) -> {
+                val x = (opcode and 0x0F00u).toInt() shr 8
+                val y = (opcode and 0x00F0u).toInt() shr 4
+
+                if(registers[x].toUInt() != registers[y].toUInt()) {
+                    incrementProgramCounter()
+                }
+
+                incrementProgramCounter()
+            }
+            Utils.hexToU16(0xA) -> {
+                index = opcode and 0x0FFFu
+                incrementProgramCounter()
+            }
+            Utils.hexToU16(0xB) -> programCounter = ((opcode and 0x0FFFu) + registers[0]).toUShort()
+            Utils.hexToU16(0xC) -> {
+                val x = (opcode and 0x0F00u).toInt() shr 8
+                val kk = (opcode and 0x00FFu).toUByte()
+                val randomByte = Random.nextInt(0, 256).toUByte()
+
+                registers[x] = randomByte and kk
+
+                incrementProgramCounter()
+            }
+            Utils.hexToU16(0xD) -> {
+                val x = (opcode and 0x0F00u).toInt() shr 8
+                val y = (opcode and 0x00F0u).toInt() shr 4
+                val height = (opcode and 0x000Fu).toInt()
+
+                val xCoord = registers[x].toInt() % 64
+                val yCoord = registers[y].toInt() % 32
+
+                registers[0xF] = 0u
+
+                for (row in 0 until height) {
+                    val spriteByte = memory[(index + row.toUInt()).toInt()]
+                    val screenY = (yCoord + row) % 32
+
+                    for (col in 0 until 8) {
+                        if ((spriteByte.toInt() and (0x80 shr col)) != 0) {
+                            val screenX = (xCoord + col) % 64
+                            val pixelIndex = screenY * 64 + screenX
+
+                            if (graphics[pixelIndex].toInt() == 1) {
+                                registers[0xF] = 1u
+                            }
+
+                            graphics[pixelIndex] = graphics[pixelIndex] xor 1u
+                        }
+                    }
+                }
 
                 incrementProgramCounter()
             }

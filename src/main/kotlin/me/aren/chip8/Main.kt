@@ -3,9 +3,11 @@
 package me.aren.chip8
 
 import me.aren.chip8.emu.CHIP8
+import me.aren.chip8.emu.Emulator
+import javax.swing.SwingUtilities
 
 fun main() {
-    println("Hello World!")
+    /*println("Hello World!")
     val chip8: CHIP8 = CHIP8()
 
     /*
@@ -34,12 +36,16 @@ fun main() {
     chip8.memory[0x251] = 0xEEu
     */
 
-    chip8.memory[0x200] = 0x61u
-    chip8.memory[0x201] = 0x50u
-    chip8.memory[0x202] = 0x82u
-    chip8.memory[0x203] = 0x10u
+    chip8.memory[0x200] = 0x63u
+    chip8.memory[0x201] = 0x01u
+    chip8.memory[0x202] = 0x64u
+    chip8.memory[0x203] = 0x01u
+    chip8.memory[0x204] = 0x83u
+    chip8.memory[0x205] = 0x41u
 
     while(true) {
         chip8.cycle()
-    }
+    }*/
+
+    SwingUtilities.invokeLater { Emulator() }
 }

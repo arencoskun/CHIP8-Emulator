@@ -1,16 +1,4 @@
-@file:OptIn(ExperimentalUnsignedTypes::class)
-
 package me.aren.chip8.emu
-
-typealias u8 = UByte
-typealias u16 = UShort
-typealias u32 = UInt
-typealias u64 = ULong
-
-typealias u8a = UByteArray
-typealias u16a = UShortArray
-typealias u32a = UIntArray
-typealias u64a = ULongArray
 
 class Utils {
     companion object {
