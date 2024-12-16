@@ -4,6 +4,7 @@ package me.aren.chip8
 
 import me.aren.chip8.emu.CHIP8
 import me.aren.chip8.emu.Emulator
+import java.io.File
 import javax.swing.SwingUtilities
 
 fun main() {
@@ -47,5 +48,17 @@ fun main() {
         chip8.cycle()
     }*/
 
-    SwingUtilities.invokeLater { Emulator() }
+    // TODO: Fix instructions that fails in the test suite
+
+    SwingUtilities.invokeLater {
+        val emu = Emulator()
+        val resourceUrl = Emulator::class.java.getResource("/roms/6-keypad.ch8")
+
+        if (resourceUrl != null) {
+            val romFile = File(resourceUrl.toURI())
+            emu.loadRomFromFile(romFile)
+        } else {
+            println("ROM file not found")
+        }
+    }
 }

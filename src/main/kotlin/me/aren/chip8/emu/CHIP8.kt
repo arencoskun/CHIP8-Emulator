@@ -46,6 +46,13 @@ class CHIP8 {
         0xF0u, 0x80u, 0xF0u, 0x80u, 0x80u  // F
     )
 
+    val keyMap = mapOf(
+        '1' to 0x1, '2' to 0x2, '3' to 0x3, 'C' to 0xC,
+        '4' to 0x4, '5' to 0x5, '6' to 0x6, 'D' to 0xD,
+        '7' to 0x7, '8' to 0x8, '9' to 0x9, 'E' to 0xE,
+        'A' to 0xA, '0' to 0x0, 'B' to 0xB, 'F' to 0xF
+    )
+
     init {
         programCounter = 0x200u
         opcode = 0u
@@ -67,7 +74,6 @@ class CHIP8 {
     }
 
     fun cycle() {
-        // I hate this, thanks kotlin
         opcode = ((memory[programCounter.toInt()].toUInt() shl 8) or memory[(programCounter + 1u).toInt()].toUInt()).toUShort()
 
         val first = (opcode.toInt() shr 12).toUShort()
@@ -155,10 +161,12 @@ class CHIP8 {
                         registers[registers.size - 1] = (result > 0xFFu).toInt().toUByte()
                     }
                     5 -> {
+                        val noborrow = registers[x] >= registers[y]
                         val result = registers[x] - registers[y]
                         registers[x] = result.toUByte()
-                        registers[registers.size - 1] = (registers[x] >= registers[y]).toInt().toUByte()
+                        registers[registers.size - 1] = noborrow.toInt().toUByte()
                     }
+                    // TODO: Fails test suite
                     6 -> {
                         val lsb = registers[x] and 0x1u
                         registers[registers.size - 1] = lsb
@@ -169,6 +177,7 @@ class CHIP8 {
                         registers[x] = result.toUByte()
                         registers[registers.size - 1] = (registers[y] >= registers[x]).toInt().toUByte()
                     }
+                    // TODO: Fails test suite
                     0xE -> {
                         val lsb = registers[x] and 0x1u
                         registers[registers.size - 1] = lsb
@@ -233,6 +242,94 @@ class CHIP8 {
 
                 incrementProgramCounter()
             }
+            Utils.hexToU16(0xE) -> {
+                val x = (opcode and 0x0F00u).toInt() shr 8
+                val ins = (opcode and 0x00FFu).toUByte()
+
+                when(ins) {
+                    Utils.hexToU8(0x9E) -> {
+                        if(keys[registers[x].toInt()].toUInt() == 1u) {
+                            incrementProgramCounter()
+                        }
+
+                        incrementProgramCounter()
+                    }
+                    Utils.hexToU8(0xA1) -> {
+                        if(keys[registers[x].toInt()].toUInt() != 1u) {
+                            incrementProgramCounter()
+                        }
+
+                        incrementProgramCounter()
+                    }
+                }
+            }
+            Utils.hexToU16(0xF) -> {
+                val x = (opcode and 0x0F00u).toInt() shr 8
+                val ins = (opcode and 0x00FFu).toUByte()
+
+                when(ins) {
+                    Utils.hexToU8(0x07) -> {
+                        registers[x] = delayTimer
+                        incrementProgramCounter()
+                    }
+                    Utils.hexToU8(0x0A) -> {
+                        val pressedKey = keys.indexOfFirst { it.toUInt() == 1u }
+
+                        if (pressedKey != -1) {
+                            registers[x] = pressedKey.toUByte()
+                            incrementProgramCounter()
+                        }
+
+                        // dont increment pc to pause execution
+                    }
+                    Utils.hexToU8(0x15) -> {
+                        delayTimer = registers[x]
+                        incrementProgramCounter()
+                    }
+                    Utils.hexToU8(0x18) -> {
+                        soundTimer = registers[x]
+                        incrementProgramCounter()
+                    }
+                    Utils.hexToU8(0x1E) -> {
+                        index = (index + registers[x]).toUShort()
+                        incrementProgramCounter()
+                    }
+                    Utils.hexToU8(0x29) -> {
+                        index = (registers[x] * 5u).toUShort()
+                        incrementProgramCounter()
+                    }
+                    Utils.hexToU8(0x33) -> {
+                        val value = registers[x].toInt()
+
+                        // hundreds
+                        memory[index.toInt()] = (value / 100).toUByte()
+
+                        // tens
+                        memory[(index + 1u).toInt()] = ((value % 100) / 10).toUByte()
+
+                        // ones
+                        memory[(index + 2u).toInt()] = (value % 10).toUByte()
+
+                        incrementProgramCounter()
+                    }
+                    Utils.hexToU8(0x55) -> {
+                        for (i in 0..x) {
+                            memory[(index + i.toUInt()).toInt()] = registers[i]
+                        }
+
+                        index = (index + x.toUInt() + 1u).toUShort()
+                        incrementProgramCounter()
+                    }
+                    Utils.hexToU8(0x65) -> {
+                        for (i in 0..x) {
+                            registers[i] = memory[(index + i.toUInt()).toInt()]
+                        }
+
+                        index = (index + x.toUInt() + 1u).toUShort()
+                        incrementProgramCounter()
+                    }
+                }
+            }
         }
     }
 
@@ -250,6 +347,18 @@ class CHIP8 {
         for (i in registers.indices) registers[i] = 0u
         for (i in keys.indices) keys[i] = 0u
         for (i in FONTSET.indices) memory[i] = FONTSET[i]
+    }
+
+    fun updateKeyState(keyValue: Int, isPressed: Boolean) {
+        keys[keyValue] = if (isPressed) 1u else 0u
+    }
+
+    fun loadRom(romData: ByteArray) {
+        val startAddress = 0x200
+
+        for (i in romData.indices) {
+            memory[startAddress + i] = romData[i].toUByte()
+        }
     }
 
 }
