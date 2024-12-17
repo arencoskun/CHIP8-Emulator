@@ -179,8 +179,8 @@ class CHIP8 {
                     }
                     // TODO: Fails test suite
                     0xE -> {
-                        val lsb = registers[x] and 0x1u
-                        registers[registers.size - 1] = lsb
+                        val msb = (registers[x].toInt() shr 7) and 0x1
+                        registers[registers.size - 1] = msb.toUByte()
                         registers[x] = (registers[x].toInt() shl 1).toUByte()
                     }
                 }
@@ -358,6 +358,16 @@ class CHIP8 {
 
         for (i in romData.indices) {
             memory[startAddress + i] = romData[i].toUByte()
+        }
+    }
+
+    fun decrementTimers() {
+        if (delayTimer > 0u) {
+            delayTimer = (delayTimer - 1u).toUByte()
+        }
+
+        if (soundTimer > 0u) {
+            soundTimer = (soundTimer - 1u).toUByte()
         }
     }
 

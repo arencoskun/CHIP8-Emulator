@@ -52,7 +52,7 @@ fun main() {
 
     SwingUtilities.invokeLater {
         val emu = Emulator()
-        val resourceUrl = Emulator::class.java.getResource("/roms/6-keypad.ch8")
+        val resourceUrl = Emulator::class.java.getResource("/roms/astro.ch8")
 
         if (resourceUrl != null) {
             val romFile = File(resourceUrl.toURI())

@@ -7,6 +7,7 @@ import java.awt.event.KeyListener
 import java.io.File
 import javax.swing.JFrame
 import javax.swing.JPanel
+import javax.swing.SwingUtilities
 import javax.swing.Timer
 
 @ExperimentalUnsignedTypes
@@ -65,10 +66,45 @@ class Emulator : JFrame() {
 
         add(displayPanel)
 
-        Timer(16) { // ~60 FPS
-            chip8.cycle()
-            displayPanel.repaint()
-        }.start()
+
+        Thread {
+            val CYCLES_PER_SECOND = 500 // Typical CHIP-8 speed
+            val NANOS_PER_CYCLE = 1_000_000_000L / CYCLES_PER_SECOND
+
+            var lastTime = System.nanoTime()
+
+            while (true) {
+                val currentTime = System.nanoTime()
+                val elapsedTime = currentTime - lastTime
+
+                if (elapsedTime >= NANOS_PER_CYCLE) {
+                    // Run cycles
+                    repeat(10) {
+                        chip8.cycle()
+                    }
+
+                    // Update display
+                    SwingUtilities.invokeLater {
+                        displayPanel.repaint()
+                    }
+
+                    lastTime = currentTime
+                }
+
+                // Small sleep to prevent excessive CPU usage
+                Thread.sleep(1)
+            }
+        }.apply {
+            isDaemon = true
+            start()
+        }
+
+        Timer(1000 / 60) {
+            chip8.decrementTimers()
+        }.apply {
+            isRepeats = true
+            start()
+        }
 
         isVisible = true
     }
@@ -77,6 +113,7 @@ class Emulator : JFrame() {
         return try {
             val romData = file.readBytes()
             chip8.loadRom(romData)
+            chip8.programCounter = 0x200u
             true
         } catch (e: Exception) {
             println("Error loading ROM: ${e.message}")
